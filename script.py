@@ -103,21 +103,25 @@ Please provide only the SQL query as output, nothing else."""),
     
     def handle_new_query(self):
         """Handle new query generation"""
-        question = input("\nEnter your SQL question: ").strip()
-        if not question:
-            print("No question entered.")
-            return
+        try:
+            question = input("\nEnter your SQL question: ").strip()
+            if not question:
+                print("No question entered.")
+                return
+                
+            sql_query = self.generate_query(question)
+            print("\n" + "-"*50)
+            print("Generated SQL Query:")
+            print("-"*50)
+            print(sql_query)
+            print("-"*50)
             
-        sql_query = self.generate_query(question)
-        print("\n" + "-"*50)
-        print("Generated SQL Query:")
-        print("-"*50)
-        print(sql_query)
-        print("-"*50)
-        
-        # Save to history
-        self.add_to_history(question, sql_query)
-        print("\n✓ Query saved to history")
+            # Save to history
+            self.add_to_history(question, sql_query)
+            print("\n✓ Query saved to history")
+        except EOFError:
+            print("\nInput cancelled.")
+            return
     
     def show_last_query(self):
         """Show the last query from history"""
@@ -210,14 +214,40 @@ Please provide only the SQL query as output, nothing else."""),
     
     def run(self):
         """Main program loop"""
+        import sys
+        
+        # Check if running in non-interactive mode (piped input)
+        if not sys.stdin.isatty():
+            print("Error: This script requires interactive input.")
+            print("Please run directly instead of piping:")
+            print("1. Download: curl -o script.py https://raw.githubusercontent.com/vinnnnnyyy/sql-generator/main/script.py")
+            print("2. Run: python script.py")
+            print("3. Clean up: del script.py")
+            return
+        
         print("\nWelcome to SQL Query Generator!")
         print("This tool remembers your queries and provides a menu system.")
+        
+        max_empty_inputs = 3  # Allow max 3 empty inputs before exiting
+        empty_input_count = 0
         
         while True:
             self.show_menu()
             
             try:
                 choice = input("\nEnter your choice (1-6): ").strip()
+                
+                # Handle empty input
+                if not choice:
+                    empty_input_count += 1
+                    if empty_input_count >= max_empty_inputs:
+                        print(f"\nReceived {max_empty_inputs} empty inputs. Exiting...")
+                        break
+                    print("Please enter a choice (1-6).")
+                    continue
+                
+                # Reset empty input counter on valid input
+                empty_input_count = 0
                 
                 if choice == '1':
                     self.handle_new_query()
@@ -239,15 +269,28 @@ Please provide only the SQL query as output, nothing else."""),
                     
                 # Pause before showing menu again (except for exit)
                 if choice != '6':
-                    input("\nPress Enter to continue...")
+                    try:
+                        input("\nPress Enter to continue...")
+                    except EOFError:
+                        # Handle EOF when piped
+                        print("\nEOF detected. Exiting...")
+                        break
                     
             except KeyboardInterrupt:
                 print("\n\nProgram interrupted by user.")
-                save = input("Save history before exit? (y/n): ").lower()
-                if save == 'y':
-                    self.save_history()
-                    print("✓ History saved.")
+                try:
+                    save = input("Save history before exit? (y/n): ").lower()
+                    if save == 'y':
+                        self.save_history()
+                        print("✓ History saved.")
+                except (EOFError, KeyboardInterrupt):
+                    pass
                 print("Goodbye!")
+                break
+            except EOFError:
+                print("\n\nEOF detected. Exiting gracefully...")
+                self.save_history()
+                print("✓ History saved.")
                 break
             except Exception as e:
                 print(f"\nAn error occurred: {e}")
