@@ -216,13 +216,21 @@ Please provide only the SQL query as output, nothing else."""),
         """Main program loop"""
         import sys
         
-        # Check if running in non-interactive mode (piped input)
-        if not sys.stdin.isatty():
-            print("Error: This script requires interactive input.")
-            print("Please run directly instead of piping:")
-            print("1. Download: curl -o script.py https://raw.githubusercontent.com/vinnnnnyyy/sql-generator/main/script.py")
-            print("2. Run: python script.py")
-            print("3. Clean up: del script.py")
+        # Check if running in non-interactive mode (piped input) and no arguments provided
+        if not sys.stdin.isatty() and len(sys.argv) == 1:
+            print("Error: This script requires interactive input when run without arguments.")
+            print("Please use one of these methods:")
+            print()
+            print("Method 1 - Download and run interactively:")
+            print("  curl -o script.py https://raw.githubusercontent.com/vinnnnnyyy/sql-generator/main/script.py")
+            print("  python script.py")
+            print("  del script.py")
+            print()
+            print("Method 2 - Use with arguments (piping):")
+            print("  curl -s URL | python - --generate \"your question\"")
+            print("  curl -s URL | python - --last")
+            print("  curl -s URL | python - --history")
+            print("  curl -s URL | python - --help")
             return
         
         print("\nWelcome to SQL Query Generator!")
@@ -315,6 +323,28 @@ if __name__ == "__main__":
             print("-" * 50)
             generator.add_to_history(question, sql_query)
             
+        elif sys.argv[1] == "--quick":
+            # Quick mode for piping: python script.py --quick
+            print("SQL Query Generator - Quick Mode")
+            print("=" * 40)
+            print("Enter your SQL question (or 'exit' to quit):")
+            
+            try:
+                while True:
+                    question = input("> ").strip()
+                    if not question or question.lower() == 'exit':
+                        break
+                    
+                    sql_query = generator.generate_query(question)
+                    print("\nSQL Query:")
+                    print("-" * 30)
+                    print(sql_query)
+                    print("-" * 30)
+                    generator.add_to_history(question, sql_query)
+                    print("Enter another question (or 'exit' to quit):")
+            except (EOFError, KeyboardInterrupt):
+                print("\nGoodbye!")
+            
         elif sys.argv[1] == "--last":
             # Show last query: python script.py --last
             generator.show_last_query()
@@ -329,6 +359,9 @@ if __name__ == "__main__":
             print("Interactive mode:")
             print("  python script.py")
             print()
+            print("Quick mode (simplified interface):")
+            print("  python script.py --quick")
+            print()
             print("Non-interactive mode:")
             print("  python script.py --generate \"your SQL question\"")
             print("  python script.py --last")
@@ -337,6 +370,7 @@ if __name__ == "__main__":
             print()
             print("Piping examples:")
             print("  curl -s URL | python - --generate \"find all users\"")
+            print("  curl -s URL | python - --quick")
             print("  curl -s URL | python - --last")
             print("  curl -s URL | python - --history")
             
