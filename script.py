@@ -298,5 +298,51 @@ Please provide only the SQL query as output, nothing else."""),
 
 
 if __name__ == "__main__":
-    generator = SQLQueryGenerator()
-    generator.run()
+    import sys
+    
+    # Check if arguments are provided for non-interactive mode
+    if len(sys.argv) > 1:
+        generator = SQLQueryGenerator()
+        
+        if sys.argv[1] == "--generate" and len(sys.argv) > 2:
+            # Direct query generation: python script.py --generate "your question"
+            question = " ".join(sys.argv[2:])
+            print(f"Question: {question}")
+            sql_query = generator.generate_query(question)
+            print("\nGenerated SQL Query:")
+            print("-" * 50)
+            print(sql_query)
+            print("-" * 50)
+            generator.add_to_history(question, sql_query)
+            
+        elif sys.argv[1] == "--last":
+            # Show last query: python script.py --last
+            generator.show_last_query()
+            
+        elif sys.argv[1] == "--history":
+            # Show history: python script.py --history
+            generator.show_history()
+            
+        elif sys.argv[1] == "--help":
+            print("SQL Query Generator - Command Line Usage")
+            print("=" * 50)
+            print("Interactive mode:")
+            print("  python script.py")
+            print()
+            print("Non-interactive mode:")
+            print("  python script.py --generate \"your SQL question\"")
+            print("  python script.py --last")
+            print("  python script.py --history")
+            print("  python script.py --help")
+            print()
+            print("Piping examples:")
+            print("  curl -s URL | python - --generate \"find all users\"")
+            print("  curl -s URL | python - --last")
+            print("  curl -s URL | python - --history")
+            
+        else:
+            print("Invalid argument. Use --help for usage information.")
+    else:
+        # Interactive mode
+        generator = SQLQueryGenerator()
+        generator.run()
